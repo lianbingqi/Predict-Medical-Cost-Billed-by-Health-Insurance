@@ -1,0 +1,229 @@
+---
+title: "Linear Regression - Predicting Individual Medical Costs Billed by Health Insurance"
+author: "Bingqi Lian"
+subtitle: "04/29/2022"
+output: html_document
+---
+
+## Introduction
+"The United States’ national health expenditure (NHE) grew 5.8% to $3.2 trillion in 2015 (i.e., $9,990 per person), which accounted for 17.8% of the nation’s gross domestic product (GDP). In seeking to control these unsustainable increases in healthcare costs, it is imperative that healthcare organizations can predict the likely future costs of individuals, so that care management resources can be efficiently targeted to those individuals at highest risk of incurring significant costs. Key stakeholders in these efforts to manage healthcare costs include health insurers, employers, society, and increasingly healthcare delivery organizations due to the transition from fee-for-service payment models to value-based payment models. For any given individual, insurers generally have the most comprehensive information on healthcare costs as they pay for care delivered across various healthcare delivery organizations.
+
+Predicting healthcare costs for individuals using accurate prediction models is important for various stakeholders beyond health insurers, and for various purposes. For health insurers and increasingly healthcare delivery systems, accurate forecasts of likely costs can help with general business planning in addition to prioritizing the allocation of scarce care management resources. Moreover, for patients, knowing in advance their likely expenditures for the next year could potentially allow them to choose insurance plans with appropriate deductibles and premiums."
+
+Excerpt from https://www-ncbi-nlm-nih-gov.proxy-um.researchport.umd.edu/pmc/articles/PMC5977561/
+
+## Exploratory Data Analysis
+
+This dataset includes 1338 observations and 7 different variables, which include 3 numerical variables and 4 categorical variables. The 3 numerical variables include age, bmi (body mass index), and charges(individual's medical cost billed by health insurance ). The 4 categorical variables include sex, children(number of dependents covered by health insurance), smoker (individual's smoking status), and region (the region that individuals locate). 
+
+I have calculated the percentage of all observations of each categorical variable occurs in the dataset. IN **sex** variable, the observation that is with the most percentage of occurrence is "male", which is around 50.5%. That means more than half of individuals in this dataset are male. For **children** variable, the observation that is with the most percentage of occurrence is "0", which is around 42.9%, which means 42.9% of individuals in this dataset don't have any children (dependents) covered by their health insurance. In **smoker** variable, the observation that is with the most occurrence is "no", which is around 79.5%. That means the majority of individuals in the dataset don't smoke. In **region** variable, the observation that is with the most percentage of occurrence is "southeast", which is around 27.2%. That means 27.2% of individuals in this dataset are from southeast region of the United States.
+
+I have also calculated the mean and standard deviation for each numerical variable. The average of individual's age in this dataset is around 39.2 with a standard deviation taht is around 14.  The average of body mass index is around 30.7 with a standard deviation that is around 6.1. And the mean of the individual's medical cost billed by their health insurance in this dataset is near 13270.4 with a standard that is around 12110. 
+
+```{r warning=FALSE, message=FALSE}
+
+## import required packages
+library(tidyverse)
+library(RNHANES)
+library(ggplot2)
+## import dataset
+insurance <- read.csv("insurance.csv")
+## check the data type of each variable
+str(insurance)
+```
+
+```{r}
+## Find the number of observations
+nrow(insurance)
+```
+
+```{r}
+## Find the number of variable
+length(insurance)
+```
+
+```{r}
+## change children variable to categorical variable
+insurance$children <- as.character(insurance$children)
+```
+
+```{r}
+## check the data type again
+str(insurance)
+```
+
+
+
+*(Find the percentage of observations for each category)*
+
+```{r}
+## find the percentage of observations in sex variable
+prop.table(table(insurance$sex))*100
+```
+
+```{r}
+## find the percentage of observations in children variable
+prop.table(table(insurance$children))*100
+```
+
+```{r}
+## find the percentage of observations in smoker variable
+prop.table(table(insurance$smoker))*100
+```
+
+```{r}
+## find the percentage of observations in region variable
+prop.table(table(insurance$region))*100
+```
+
+
+
+*(Find the mean and standerd devision for each numerical variable)*
+```{r}
+## find mean for age variable
+mean(insurance$age)
+## find standard deviation for age variable
+sd(insurance$age, na.rm = T)
+```
+
+```{r}
+## find mean for bmi variable
+mean(insurance$bmi)
+## find standard deviation for bmi variable
+sd(insurance$bmi, na.rm = T)
+```
+
+```{r}
+## find mean for charges variable
+mean(insurance$charges)
+## find standard deviation for charges variable
+sd(insurance$charges)
+
+```
+
+## Data Visualization
+
+In this section, I have discovered the distribution of individual medical costs billed by health insurance by different categorical variables by using box plots (figure 1 to figure 4), and also discovered the relationships between individual medical costs billed by health insurance (Y) and different numerical variables (X) by using scatter plots (figure 5 and figure 6).
+
+In figure 1, I discovered the distribution of individual's medical cost billed by their health insurance, by their sex. Based on the figure 1, we can see the mininum, Q1, and median for both male and female are really similar, but male has a greater Q3 and maximum than female, which means males are more like to get serious medical treatments that cost huge money, compared to female. 
+
+The result I got from figure 2 is pretty interesting. The figure 2 discovers the distribution of individual's medical cost billed by their health insurance, by the number of children(dependents) covered by their insurance. In figure 2, we can see that the population that health insurance don't cover any dependent has the lowest minimum and Q1 for the medical cost, but has the second highest median and the most number of outliers, compared to other observations in this categorical variable. And the population that health insurance covers 5 children (dependents) has the highest minimum cost, and least Q4, Q3,median, and number of outliers. At the same time, if we look at the Q3 and Q4 for all those observations, we can find Q3 and Q4 don't always increase as the increase of number of individuals covered by health insurance, which is not as what we expect that the total medical cost will get increased as the number of people covered by insurance gets increased, since when a health insurance covers more people, the amount that people need to go to hospitals or clinics will be higher, which will cause more cost to them. Therefore, I assume there are two possible reasons that causes this situation. First, the collected data is biased, which caused an biased result. The second possible reason is insurance companies may have a better benefit to families that have more family members and all covered in the same insurance plan, so that they can have more maximum benefit and less co-payment and coinsurance amount from their insurance, when they already pay enough amount for deductible by themselves.  
+
+Based on the figure 3, I have discovered the distribution of individual's medical cost billed by their health insurance, by their smoking status. In figure 3, we can find all 5 values (minimum, Q1, median, Q3, and maximum) and number of outliers of people whose smoking status is smoking are around 2 or 3 times higher than people whose smoking status is non-smoking. 
+
+The figure 4 discovers the distribution of individual's medical cost billed by their health insurance, by different regions that individuals locate. In this graph, we can see the min, Q1, and median for all 4 different regions are almost similar. However, the southeast region has the most Q3 and maxinum of medical cost than other 3 regions (southwest, northwest, and northeast). If we look back the last section above, the percentage of "southeast" occurs in 
+**region** variable is the highest (around 27%), which is much higher than other 3 regions (all other 3 are around 22%). Therefore, the collected data may be biased, which caused this situation happens. But we are not able to promise if there is no other underlying factors behind this situation. 
+
+The figure 5 discovers the relationship between medical cost and individual's age. Based on this scatter plot, we can see when individual's age get increased, the amount of their medical cost will get increased at the same time (please refer the plot graph and its trending line).
+
+The figure 6 discovers the relationship between individual's medical cost and their body mass index. As the plot graph and its trending line shows, when people's body mass index get increased, their medical cost will get increased. 
+
+
+
+*(Create boxplots showing the difference in the spread of the outcome variable, "Individual medical costs billed by health insurance", by each group of the categorical variable)*
+
+```{r warning=FALSE, message=FALSE}
+## create a box plot for sex variable and charges variable
+ggplot(data=insurance) + aes(x=sex, y=charges, fill=sex) +  geom_boxplot()+
+   labs(title="Distribution of Medical Costs Billed by Health Insurance, by Sex (Figure1)",x="Sex",y="cost (dollar)", fill="Sex") + theme(plot.title = element_text(hjust = 1))
+
+```
+
+```{r warning=FALSE, message=FALSE}
+## create a box plot for children variable and charges variable
+ggplot(data=insurance) + aes(x=children, y=charges, fill=children) +  geom_boxplot()+
+   labs(title="Distribution of Medical Costs Billed by Health Insurance, by children (Figure2)",x="Number of Children",y="Cost (dollar)", fill="Number of Children") + theme(plot.title = element_text(hjust = 0.25))
+
+```
+
+```{r warning=FALSE, message=FALSE}
+## create a box plot for smoker variable and charges variable
+ggplot(data=insurance) + aes(x=smoker, y=charges, fill=smoker) +  geom_boxplot()+
+   labs(title="Distribution of Medical Costs Billed by Health Insurance, by smoking status (Figure3)",x="Smoking Status",y="Cost (dollar)", fill="Smoking Status") + theme(plot.title = element_text(hjust = 1))
+
+```
+
+```{r warning=FALSE, message=FALSE}
+## create a box plot for region variable and charges variable
+ggplot(data=insurance) + aes(x=region, y=charges, fill=region) +  geom_boxplot()+
+   labs(title="Distribution of Medical Costs Billed by Health Insurance, by Different Region (Figure4)",x="Different Region",y="Cost (dollar)", fill="Different Region") + theme(plot.title = element_text(hjust = 1))
+
+```
+
+
+
+*(For all continuous variables, create a scatterplot showing the relationship between the continuous variable (X) and the outcome variable, "Individual medical costs billed by health insurance" (Y))*
+
+```{r warning=FALSE, message=FALSE}
+## create a scatter plot to show the relationship between age variable and charges variable
+ggplot(data=insurance) + aes(x=age, y=charges) + geom_point()+ geom_smooth(method=lm)+
+   labs(title="Relationship Between Age and medical costs Billed by Insurance(Figure5)",x="Age (In Years)", y="Cost (dollar)") + theme(plot.title = element_text(hjust = 1))
+```
+
+```{r warning=FALSE, message=FALSE}
+## create a scatter plot to show the relationship between bmi variable and charges variable
+ggplot(data=insurance) + aes(x=bmi, y=charges) + geom_point()+geom_smooth(method=lm)+
+   labs(title="Relationship Between Body Mass Index and Medical Costs Billed by Insurance(Figure6)",x="Body Mass Index ", y="Cost (dollar)") + theme(plot.title = element_text(hjust = 1))
+```
+
+## Multiple Linear Regression Results
+
+-- **Interpret the intercept coefficient:** The intercept coefficient is -11927.17. This can be formally interpreted as: When all of the predictors equal zero, the average number of individual's medical cost billed by their health insurance is -11927.17.
+
+-- **Interpret the Adjusted R-square:** The adjusted R-square is 0.7497. This can be formally interpreted as: 74.97% of the variation in the average individual's medial costs billed by their insurance is explained by the variation in their age, sex, body mass index, smoking status, region, and number of children (dependents) covered by insurance.
+
+--**Interpret the slope (independent variables) coefficients:**
+
+**Age**: For a 1 year age increase in individual's age, the individual's medical cost billed by their insurance  increases by an average of 257.19, holding all other variables in the model constant.
+
+**Body mass index**: For a 1 kg/m^2 increase in individual's body mass index, the individual's medical cost billed by their insurance  increases by an average of 336.91, holding all other variables in the model constant.
+
+**Sex**: The individual's medical cost billed by their health insurance is 128.16 dollars lower in people who are male than people who are female, holding all other variables in the model constant.
+
+**Number of Children(dependents) covered by insurance**:
+The individual's medical cost billed by their health insurance is 390.98 dollars higher in people whose health insurance covers 1 children (dependents) than people whose health insurance doesn't cover any dependent.
+
+The individual's medical cost billed by their health insurance is 1635.78 dollars higher in people whose health insurance covers 2 children (dependents) than people whose health insurance doesn't cover any dependent.
+
+The individual's medical cost billed by their health insurance is 964.34 dollars higher in people whose health insurance covers 3 children (dependents) than people whose health insurance doesn't cover any dependent.
+
+The individual's medical cost billed by their health insurance is 2947.37 dollars higher in people whose health insurance covers 4 children (dependents) than people whose health insurance doesn't cover any dependent.
+
+The individual's medical cost billed by their health insurance is 1116.04 dollars higher in people whose health insurance covers 5 children (dependents) than people whose health insurance doesn't cover any dependent.
+
+**Smoking status**: The individual's medical cost billed by their health insurance is 23836.41 dollars higher in people who smoke than people don't smoke
+
+**Region**: The individual's medical cost billed by their health insurance is 380.04 dollars lower in people who locate in northwest region than people locate in northeast region.
+
+The individual's medical cost billed by their health insurance is 1033.14 dollars lower in people who locate in southeast region than people locate in northeast region.
+
+The individual's medical cost billed by their health insurance is 952.89 dollars lower in people who locate in southwest region than people locate in northeast region.
+
+
+
+*(Build a multiple linear regression model with "Individual medical costs billed by health insurance" as the outcome variable, and all the other variables as the predictors. Treat "Number of children covered by health insurance/Number of dependents" as a categorical variable:)*
+```{r warning=FALSE, message=FALSE}
+## create the model
+ml_model <- lm(charges ~ age + bmi + factor(sex) + factor(children) + factor(smoker) + factor(region), data = insurance)
+```
+
+```{r warning=FALSE, message=FALSE}
+## to show the outcome
+summary(ml_model)
+```
+
+## Linear Regression Assumptions
+
+-- **Linearity of the data**: the table we use to assess this assumption is *Residuals vs Fitted*. In this plot, a horizontal red line is NOT at approximately zero, it is with distinct patterns is an indication for a linear relationship. Therefore, **our data violates this assumption**. 
+
+-- **Normality of residuals**: the plot we use to assess this assumption is *Normal Q-Q*. In this plot, we can see the residual points only fit around 1/3 of the straight dashed line, don't completely follow the straight dashed line. Therefore, **our data appears to violate the assumption**.
+
+-- **Homogeneity of residuals variance**: the plot we will use to assess this assumption is *Scale_Location*. Based on this table, we can conclude that **our data appears to violate the assumption**, because only when  red line on plot is flat and horizontal with equally and randomly spread data points, the this assumption can be meet. However, the red line of this plot is not flat and shows a positive slope, and the data points are not randomly distributed. Therefore, our data violates this assumption. 
+
+--**Independence of residuals error terms**: the plot *Residuals vs Leverage* is used to assess this assumption. Based on this plot, we can there are many lines cross the red Cook's distance line. Therefore, our data appears to violate this assumption. 
+```{r warning=FALSE, message=FALSE}
+# checking assumptions)
+plot(ml_model)
+
+```
+
